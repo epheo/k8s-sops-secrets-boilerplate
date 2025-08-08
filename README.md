@@ -12,8 +12,11 @@ encryption and secret management.
 This repo boilerplate uses [**SOPS**](https://github.com/getsops/sops) (Secrets OPerationS), 
 [**AGE**](https://github.com/FiloSottile/age) encryption and advanced 
 [gitattributes filters](https://git-scm.com/docs/gitattributes#_filter) in order to 
-provide a transparent workflow for developers to manage their secrets with the kubernetes 
-[sops-secrets-operator](https://github.com/isindir/sops-secrets-operator).
+provide a transparent workflow for developers to manage their secrets.
+
+While this may be enough by itself we can also use 
+[sops-secrets-operator](https://github.com/isindir/sops-secrets-operator) when using 
+ArgoCD or Flux for GitOps.
 
 ## 🎯 What This Provides
 
