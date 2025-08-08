@@ -23,15 +23,20 @@ Sleep 1s
 Enter
 Type "echo 'What Git actually stores (encrypted)'"
 Enter
+Type "git diff --cached --name-only"
+Enter
 Type "git show :examples/basic-secret.yaml"
 Enter
-Sleep 4s
+Sleep 3s
+Space
+Sleep 1s
+Space
 Type "q"
 
 # Show working directory (still readable)
 Enter
+Type "echo 'Working dir still readable'"
+Enter
 Type "cat examples/basic-secret.yaml"
 Enter
 Sleep 2s
-Type "echo 'Working dir still readable'"
-Enter
