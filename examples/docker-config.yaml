@@ -1,29 +1,31 @@
-apiVersion: v1
-kind: Secret
+apiVersion: isindir.github.com/v1alpha3
+kind: SopsSecret
 metadata:
-  name: docker-registry-secret
-  namespace: default
-  labels:
-    app: my-app
-  annotations:
-    def.ms/sops-encrypt: "true"
-    description: "Docker registry credentials"
-type: kubernetes.io/dockerconfigjson
-stringData:
-  .dockerconfigjson: |
-    {
-      "auths": {
-        "registry.example.com": {
-          "username": "myuser",
-          "password": "myregistrypassword123",
-          "email": "user@example.com",
-          "auth": "bXl1c2VyOm15cmVnaXN0cnlwYXNzd29yZDEyMw=="
-        },
-        "docker.io": {
-          "username": "dockerhubuser",
-          "password": "dockerhubpass456",
-          "email": "user@example.com",
-          "auth": "ZG9ja2VyaHVidXNlcjpkb2NrZXJodWJwYXNzNDU2"
-        }
-      }
-    }
+    annotations:
+        def.ms/sops-encrypt: "true"
+        description: Docker registry credentials
+    labels:
+        app: my-app
+    name: docker-registry-secret-sops
+    namespace: default
+spec:
+    secretTemplates:
+        - name: docker-registry-secret
+          stringData:
+            .dockerconfigjson: ENC[AES256_GCM,data:qe4MXltyj6VsX0qnp6UbP6F7PSczFoWgYplOJweW9TED+z3JwY0RAQF8y4SetffNBpWQHKDgvg8qTYnW5n2RJC86QjPMiq1OYEs57uvKJXvopo2QHP7rACazOQAT4XmOv1RUjysFBNvqZQww9SblDa1ZRgg645VZeWQpf4HRhkHUOEZocRzbA1cQzZ3p0aB8G7dv5lSyZQb+83wmDpW9/lvYIQ9g+sBeeC4SiWruQucYLpAKdPBd0RwJdusfltVVesf9t/xLfgF+NjDEGhsl4/wRlzSnRlih3dvW8ec1qq+kNteVNXe5tC6bCtneWT460sbf/oyChm4uRUb8d1fiHNt0pyrlSos3ago1ssn7a/3zmsP/MQxOVRPE9E7XKAj5W5aVn/auFM8Xkuy3l+QI7rKcrG/YT/ZSvc79DmGXyu/IX+FDMBi5P87M4BEqpPBIzp0hmFad9pX4YWKQ5NtsKnELTnmbRVWK6VnicpkRCyCvyzhY8+7nrM2EYjnlP454fUXWbUVJQ4tspQ1oSXVISH3WEwDx71PaBALN,iv:2EKoWe+4SRqdqWQhYEgOYcxvmQa+1yJBlI9HEbRm6S0=,tag:PID9mwWyAVRDnFyqscTEig==,type:str]
+          type: kubernetes.io/dockerconfigjson
+sops:
+    age:
+        - recipient: age1apsxs6l3u4f6z4ejpcf97kd3st234hl6k9zle5y52fmsrv098q9skpemtf
+          enc: |
+            -----BEGIN AGE ENCRYPTED FILE-----
+            YWdlLWVuY3J5cHRpb24ub3JnL3YxCi0+IFgyNTUxOSBCWWVHNStQNVhVcUhlRmZo
+            bzdGeUFFUUphTFhtbmF1NjY3ajVrOENkT0JzCmRqSGFyYkN5NUxBS1pReFRWYzhU
+            UFJCa0FyaWwwUUJ0QUovZVJGeTJ6aVkKLS0tIC8wUlpIRjVsTzFSOWNHeWFJV24v
+            ckVlRnRuYjVLNlNpVzRvMUtnQm1ycDAK3PfVtzQKGeekwrAi5bdChkzMVyi+IAWs
+            6SwJFew7eEkI05Xev4DNw+qd0Ekkb+HYp1xS8g9M04s4EGFZLtA30A==
+            -----END AGE ENCRYPTED FILE-----
+    lastmodified: "2025-08-08T16:09:19Z"
+    mac: ENC[AES256_GCM,data:dEbqwhqWVO5OqepZABQQPJHI7ErxTVR6u3gjmqkycJiSzuhL0r4zPUXIvcCLEbi/yFznpIXKFidYQmf5/tH4iAebT1nMa7cskrgaDTMlCoCfQG/hrCPwwE+UaFcMLmHSxuMHr5cjc6rR05yjmTW94AbEB9Xs9e/1Yhmii5Did9I=,iv:Jw+Kpmrm2hLRKNuuQWgTyPUDRabwHtzLKZZd1/WDics=,tag:11gENnzU1uLrmDJ18hiDQg==,type:str]
+    encrypted_regex: ^(data|stringData)$
+    version: 3.10.2

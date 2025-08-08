@@ -1,30 +1,36 @@
-apiVersion: v1
-kind: Secret
+apiVersion: isindir.github.com/v1alpha3
+kind: SopsSecret
 metadata:
-  name: mixed-fields-secret
-  namespace: default
-  labels:
-    app: my-app
-  annotations:
-    def.ms/sops-encrypt: "true"
-    description: "Example with both data and stringData fields"
-type: Opaque
-data:
-  # Base64 encoded values (will be preserved as data)
-  encoded-username: bXl1c2Vy  # myuser (base64)
-  encoded-token: bXlTZWNyZXRUb2tlbjEyMw==  # mySecretToken123 (base64)
-stringData:
-  # Plain text values (will be preserved as stringData)
-  plain-password: "plainTextPassword456"
-  api-key: "sk-abcdef123456789"
-  config.yaml: |
-    server:
-      host: "api.example.com"
-      port: 8443
-      ssl: true
-    database:
-      connection: "postgresql://user:pass@db.example.com/app"
-    features:
-      analytics: true
-      caching: true
-      debug: false
+    annotations:
+        def.ms/sops-encrypt: "true"
+        description: Example with both data and stringData fields
+    labels:
+        app: my-app
+    name: mixed-fields-secret-sops
+    namespace: default
+spec:
+    secretTemplates:
+        - data:
+            encoded-token: ENC[AES256_GCM,data:rrT+qMMBj+QN005/TSCYFKHroZharc7v,iv:9Xxn7Dl/ALzQhsDTVr9L7rKNxm/lXZDbzw9wzvdNHt8=,tag:EWv1coaP3FPrBIbdcg4qhQ==,type:str]
+            encoded-username: ENC[AES256_GCM,data:o+69GvP/bVo=,iv:m9MOVknS7dEMeB356ruqBGXmxSwMgFA8G18MmjpF7Q8=,tag:/esud2ht2PIlJE++gAG79A==,type:str]
+          name: mixed-fields-secret
+          stringData:
+            api-key: ENC[AES256_GCM,data:6HcrICiUx2U/Q+NU2fuacyAm,iv:7o5nXaqqHYgLlWcF0CtZcKx0gCFNI6jUIOlmBgnCHs0=,tag:Dyvc478y68aBfN6pJCEMWA==,type:str]
+            config.yaml: ENC[AES256_GCM,data:D6gRGkXup5sE39xJB6vyFlp+qNxmHVSocBmiPNRsHYsenR7D9GEr6BE3oe8s3ReHKIOR23meCk0Gl9wMobZ1/bvpD2XnVdwV3hSF5sJm6tFVAm0rbtJu6evt7AW5/OsJrO2rJuUn5soMVKTrGnoAkYwp9i+QbV/kbKfkIhnP2xWL5Gz2+93k4rJW8IHSvfpNXeqMkGFaigHpQ4p6ZFSVCMy9+NGrisDJW7BfPqdMcPbJUioCJxRJnm21,iv:apok1fCdbi+epoT983vkhZZz4z261sxLm0oRzk9waKk=,tag:Y56zkLUsDCIxQPTSNLLd1g==,type:str]
+            plain-password: ENC[AES256_GCM,data:2ExVxE8+fLU+AgJ6ksrOYWMHA/I=,iv:eGYnsOawawTO9ix4ZEcDW/BSKqtTw7IksM6SbsZ1rHg=,tag:HBB8VU/iD6LEnUCA9fg8VQ==,type:str]
+          type: Opaque
+sops:
+    age:
+        - recipient: age1apsxs6l3u4f6z4ejpcf97kd3st234hl6k9zle5y52fmsrv098q9skpemtf
+          enc: |
+            -----BEGIN AGE ENCRYPTED FILE-----
+            YWdlLWVuY3J5cHRpb24ub3JnL3YxCi0+IFgyNTUxOSBrUVBDdWZON1JDeW0weERH
+            Qk1VMisxelEyN3BXSU4rQkwzRENtbkpNK2xjCjEzM0JwaEZEa1JyUWlpQlBjM1Q3
+            d29TWGNVZGIvV3FDQnA1SmhrQlROVzgKLS0tIExVM1lKS3N6UjM5MWZlSXJCQzIv
+            aERQQmNVWjNlRFhSZ2QxU05qd3dQVEEKTat4Mqfzigth7IiMVr9bQzcxmVBsj+Wf
+            /Yod/eVpwSvkrFpndxv8nTIwWpL7+JKtq4iMXHa9oiNddTw8Ir1czw==
+            -----END AGE ENCRYPTED FILE-----
+    lastmodified: "2025-08-08T16:09:19Z"
+    mac: ENC[AES256_GCM,data:4cReRYykCRVROY80RpF/r07AghozcAu2yZ6sjYhztLYY6lUc7zXbv01bpWpKwB+dvX+qDOaVF7VXhg5hTZ1Le3XSSWFLtqMPHhUvSiQaYQtU4orJY2D2/rfccdtWqSPfwyKl6qZ787A5z7FKJ1DeFSkzURyONKzg8QONhcbf+Gw=,iv:BgLw+2wGV+n6QY/MeEdx0spH7/H+uaW2UD9N/EW4Nxs=,tag:1YKJLG5ZtjxWGDLrqs8SrQ==,type:str]
+    encrypted_regex: ^(data|stringData)$
+    version: 3.10.2
