@@ -79,13 +79,6 @@ cleanup() {
             echo "   Removed: $file"
         fi
     done
-    
-    # Reset any Git changes
-    if git status --porcelain | grep -q .; then
-        log_info "Resetting Git changes..."
-        git reset --hard HEAD > /dev/null 2>&1
-        git clean -fd > /dev/null 2>&1
-    fi
 }
 
 # Set up cleanup trap
@@ -319,7 +312,7 @@ else
     log_error "Secret without annotation was incorrectly processed"
 fi
 
-if echo "$UNPROCESSED_OUTPUT" | grep -q "public-config: This data is not sensitive"; then
+if echo "$UNPROCESSED_OUTPUT" | grep -q "public-config.*This data is not sensitive"; then
     log_success "Unencrypted secret data preserved"
 else
     log_error "Unencrypted secret data modified"

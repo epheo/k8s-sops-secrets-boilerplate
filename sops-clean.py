@@ -27,9 +27,9 @@ def should_process_secret(secret):
 def secret_to_sops_secret(secret):
     """Convert a Kubernetes Secret to SopsSecret format"""
     
-    # Generate SopsSecret name
+    # Generate SopsSecret name (avoid duplicate suffix)
     original_name = secret['metadata']['name']
-    sops_name = f"{original_name}-sops" if not original_name.endswith('-sops') else original_name
+    sops_name = original_name if original_name.endswith('-sops') else f"{original_name}-sops"
     
     # Preserve metadata (labels, annotations)
     sops_metadata = {
@@ -61,11 +61,6 @@ def secret_to_sops_secret(secret):
     if 'immutable' in secret:
         secret_template['immutable'] = secret['immutable']
     
-    # Copy template-level labels/annotations if present
-    if 'labels' in secret['metadata']:
-        secret_template['labels'] = secret['metadata']['labels']
-    if 'annotations' in secret['metadata']:
-        secret_template['annotations'] = secret['metadata']['annotations']
     
     return {
         'apiVersion': 'isindir.github.com/v1alpha3',
@@ -91,6 +86,7 @@ def get_age_key_path():
 
 def encrypt_with_sops(content):
     """Encrypt YAML content using SOPS"""
+    temp_path = None
     try:
         with tempfile.NamedTemporaryFile(mode='w', suffix='.yaml', delete=False) as f:
             yaml.dump(content, f, default_flow_style=False)
@@ -110,33 +106,31 @@ def encrypt_with_sops(content):
             check=True
         )
         
-        os.unlink(temp_path)
         return result.stdout
         
     except subprocess.CalledProcessError:
         # SOPS encryption failed, return original content
-        os.unlink(temp_path)
         return yaml.dump(content, default_flow_style=False)
     except Exception:
         # Any other error, return original content
-        if 'temp_path' in locals():
-            os.unlink(temp_path)
         return yaml.dump(content, default_flow_style=False)
+    finally:
+        # Always cleanup temp file
+        if temp_path and os.path.exists(temp_path):
+            os.unlink(temp_path)
 
 def main():
     try:
         # Read content from stdin first for fast detection
         input_content = sys.stdin.read()
         
-        # Fast path: Ultra-fast string check to avoid expensive processing
-        # for files that definitely aren't secrets (optimization)
-        if not ('kind: Secret' in input_content or 'kind: SopsSecret' in input_content):
+        # Fast path: Skip non-secrets quickly
+        if 'kind:' not in input_content or ('Secret' not in input_content and 'SopsSecret' not in input_content):
             sys.stdout.write(input_content)
             return
         
-        # Check for multi-document YAML separators (at start of line)
-        if '\n---\n' in input_content or input_content.startswith('---\n'):
-            # Multi-document file detected, pass through unchanged
+        # Skip multi-document YAML files
+        if input_content.startswith('---\n') or '\n---\n' in input_content:
             sys.stdout.write(input_content)
             return
         
@@ -144,7 +138,6 @@ def main():
         content = yaml.safe_load(input_content)
         
         if not content or not isinstance(content, dict):
-            # Not valid YAML or not a dict, pass through
             sys.stdout.write(input_content)
             return
         
@@ -159,24 +152,18 @@ def main():
                 sys.stdout.write(encrypted)
             else:
                 # Secret doesn't have required annotation, pass through unchanged
-                yaml.dump(content, sys.stdout, default_flow_style=False)
+                sys.stdout.write(input_content)
         elif kind == 'SopsSecret':
             # Already a SopsSecret, just encrypt
             encrypted = encrypt_with_sops(content)
             sys.stdout.write(encrypted)
         else:
             # Not a Secret or SopsSecret, pass through unchanged
-            yaml.dump(content, sys.stdout, default_flow_style=False)
+            sys.stdout.write(input_content)
             
     except Exception:
         # On any error, pass through original input
-        # input_content is already available from the start of main()
-        if 'input_content' in locals():
-            sys.stdout.write(input_content)
-        else:
-            # Fallback if something went wrong very early
-            sys.stdin.seek(0)
-            sys.stdout.write(sys.stdin.read())
+        sys.stdout.write(input_content)
 
 if __name__ == '__main__':
     main()

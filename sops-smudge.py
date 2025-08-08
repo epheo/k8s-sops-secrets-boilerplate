@@ -12,7 +12,6 @@ DEFAULT_AGE_KEY_PATH = ".age/age.key"  # Default repository-local path
 
 import sys
 import yaml
-import base64
 import subprocess
 import tempfile
 import os
@@ -114,6 +113,7 @@ def decrypt_with_sops(content):
     if not age_key_path:
         return None
     
+    temp_path = None
     try:
         with tempfile.NamedTemporaryFile(mode='w', suffix='.yaml', delete=False) as f:
             f.write(content)
@@ -130,18 +130,18 @@ def decrypt_with_sops(content):
             check=True
         )
         
-        os.unlink(temp_path)
         return yaml.safe_load(result.stdout)
         
     except subprocess.CalledProcessError:
         # Decryption failed
-        os.unlink(temp_path)
         return None
     except Exception:
         # Any other error
-        if 'temp_path' in locals():
-            os.unlink(temp_path)
         return None
+    finally:
+        # Always cleanup temp file
+        if temp_path and os.path.exists(temp_path):
+            os.unlink(temp_path)
 
 def is_sops_encrypted(content):
     """Check if content appears to be SOPS encrypted"""
@@ -152,16 +152,13 @@ def main():
         # Read content from stdin
         input_content = sys.stdin.read()
         
-        # Fast path: Ultra-fast string check to avoid expensive processing
-        # for files that definitely aren't SOPS secrets (optimization)
-        if not ('kind: SopsSecret' in input_content or 'sops:' in input_content):
+        # Fast path: Skip non-SOPS content quickly
+        if 'sops:' not in input_content and 'SopsSecret' not in input_content:
             sys.stdout.write(input_content)
             return
         
-        # Check for multi-document YAML separators (at start of line)
-        # Don't count --- inside encrypted content
-        if '\n---\n' in input_content or input_content.startswith('---\n'):
-            # Multi-document file detected, pass through unchanged
+        # Skip multi-document YAML files
+        if input_content.startswith('---\n') or '\n---\n' in input_content:
             sys.stdout.write(input_content)
             return
         
@@ -179,7 +176,7 @@ def main():
                         yaml.dump(secret, sys.stdout, default_flow_style=False)
                     else:
                         # SopsSecret doesn't have required annotation, return as-is
-                        yaml.dump(decrypted, sys.stdout, default_flow_style=False)
+                        sys.stdout.write(input_content)
                     return
                 else:
                     # Decrypted but not a SopsSecret, return as-is
@@ -199,9 +196,9 @@ def main():
                         yaml.dump(secret, sys.stdout, default_flow_style=False)
                     else:
                         # SopsSecret doesn't have required annotation, return as-is
-                        yaml.dump(content, sys.stdout, default_flow_style=False)
+                        sys.stdout.write(input_content)
                     return
-        except:
+        except yaml.YAMLError:
             pass
         
         # Not encrypted, not a SopsSecret, or parsing failed - pass through
@@ -209,9 +206,7 @@ def main():
         
     except Exception:
         # On any error, pass through original input
-        sys.stdin.seek(0)
-        content = sys.stdin.read()
-        sys.stdout.write(content)
+        sys.stdout.write(input_content)
 
 if __name__ == '__main__':
     main()
