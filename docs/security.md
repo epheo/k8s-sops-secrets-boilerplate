@@ -27,8 +27,8 @@ chmod 600 .age/age.key
 age-keygen -o .age/age-new.key
 
 # 2. Update .sops.yaml with new public key
-# 3. Re-encrypt all secrets
-find . -name "*.yaml" -exec sops updatekeys {} \;
+# 3. Re-encrypt only secrets marked for encryption
+find . -name "*.yaml" -exec grep -l "def.ms/sops-encrypt.*true" {} \; | xargs git add --renormalize
 
 # 4. Test decryption works
 ./run-e2e-tests.sh
@@ -74,8 +74,9 @@ You can update `.sops.yaml` according to preferences for more granular access.
 age-keygen -o .age/team-member-1.key
 
 # Collect public keys and update .sops.yaml
-# Re-encrypt existing secrets for all keys
-sops updatekeys *.yaml
+# Re-encrypt only secrets marked for encryption  
+grep -l "def.ms/sops-encrypt.*true" *.yaml | xargs git add --renormalize
+git commit -m "Re-encrypt secrets for all team members"
 ```
 
 ## Access Control
