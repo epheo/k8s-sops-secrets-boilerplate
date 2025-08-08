@@ -18,17 +18,17 @@ While this may be enough by itself we can also use
 [sops-secrets-operator](https://github.com/isindir/sops-secrets-operator) when using 
 ArgoCD or Flux for GitOps.
 
-## 🎯 What This Provides
+## What This Provides
 
-- **🔒 Transparent Encryption**: Secrets are automatically encrypted when committed to Git
-- **🔓 Transparent Decryption**: Encrypted secrets appear as readable YAML in your working directory
-- **🎯 Selective Processing**: Only secrets with specific annotations are encrypted
-- **🔄 GitOps Integration**: Full automation from Git commit to deployed Kubernetes secrets
-- **✅ E2E Testing**: Comprehensive test suite to validate the entire workflow
+- **Transparent Encryption**: Secrets are automatically encrypted when committed to Git
+- **Transparent Decryption**: Encrypted secrets appear as readable YAML in your working directory
+- **Selective Processing**: Only secrets with specific annotations are encrypted
+- **GitOps Integration**: Full automation from Git commit to deployed Kubernetes secrets
+- **E2E Testing**: Comprehensive test suite to validate the entire workflow
 
 ![Transparent SOPS GitOps Demo](./demo.gif)
 
-## 🚀 Quick Start
+## Quick Start
 
 1. **Prerequisites**: Install required tools:
    ```bash
@@ -148,14 +148,14 @@ graph TB
     end
 ```
 
-## 📚 Documentation
+## Documentation
 
 - **[Advanced Setup](./docs/advanced-setup.md)**: Advanced configuration and testing
 - **[Usage Guide](./docs/usage.md)**: How to create and manage encrypted secrets
 - **[Troubleshooting](./docs/troubleshooting.md)**: Common issues and solutions
 - **[Security Guide](./docs/security.md)**: Best practices for key management
 
-## 🧪 Testing
+## Testing
 
 This boilerplate includes comprehensive E2E tests with two modes:
 
@@ -170,11 +170,11 @@ This boilerplate includes comprehensive E2E tests with two modes:
 ./run-e2e-tests.sh --help
 ```
 
-## 📄 License
+## License
 
 MIT License - see [LICENSE](./LICENSE) for details.
 
-## 🙏 Acknowledgments
+## Acknowledgments
 
 - [SOPS](https://github.com/getsops/sops) - Secrets OPerationS by Mozilla
 - [AGE](https://github.com/FiloSottile/age) - A simple, modern and secure encryption tool
