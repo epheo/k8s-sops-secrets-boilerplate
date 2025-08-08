@@ -1,0 +1,11 @@
+creation_rules:
+  # Never encrypt the SOPS configuration file itself
+  - path_regex: '^\.sops\.ya?ml$'
+    # No encryption rules - this prevents SOPS from processing this file
+    
+  # Encrypt all YAML files with AGE, only encrypt sensitive data fields
+  - path_regex: '.*\.ya?ml$'
+    age: >-
+      YOUR_AGE_PUBLIC_KEY_HERE
+    # Follow Kubernetes Secret API - encrypt only sensitive data fields
+    encrypted_regex: '^(data|stringData)$'

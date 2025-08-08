@@ -1,0 +1,30 @@
+apiVersion: v1
+kind: Secret
+metadata:
+  name: mixed-fields-secret
+  namespace: default
+  labels:
+    app: my-app
+  annotations:
+    def.ms/sops-encrypt: "true"
+    description: "Example with both data and stringData fields"
+type: Opaque
+data:
+  # Base64 encoded values (will be preserved as data)
+  encoded-username: bXl1c2Vy  # myuser (base64)
+  encoded-token: bXlTZWNyZXRUb2tlbjEyMw==  # mySecretToken123 (base64)
+stringData:
+  # Plain text values (will be preserved as stringData)
+  plain-password: "plainTextPassword456"
+  api-key: "sk-abcdef123456789"
+  config.yaml: |
+    server:
+      host: "api.example.com"
+      port: 8443
+      ssl: true
+    database:
+      connection: "postgresql://user:pass@db.example.com/app"
+    features:
+      analytics: true
+      caching: true
+      debug: false

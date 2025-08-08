@@ -1,0 +1,11 @@
+# SOPS Git Filters
+# Automatically encrypt/decrypt SOPS secrets using Git's built-in filter system
+# Content-based filtering: all YAML files processed, filters decide what to encrypt
+
+# Process all YAML files - filters will check content to determine encryption
+*.yaml filter=sops diff=sops
+*.yml filter=sops diff=sops
+
+# Exclude SOPS configuration from filtering
+.sops.yaml -filter
+.sops.yml -filter
