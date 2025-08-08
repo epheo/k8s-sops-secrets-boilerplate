@@ -46,32 +46,20 @@ def sops_secret_to_secret(sops_secret):
     # Use the first template (most common case)
     template = templates[0]
     
-    # Handle both data and stringData fields
-    secret_data = {}
-    secret_string_data = {}
-    
-    # Process data field (base64 encoded)
-    for key, value in template.get('data', {}).items():
-        secret_data[key] = value
-    
-    # Process stringData field (plain text)
-    for key, value in template.get('stringData', {}).items():
-        secret_string_data[key] = value
+    # Extract data fields
+    secret_data = template.get('data', {})
+    secret_string_data = template.get('stringData', {})
     
     # Build Secret metadata
     secret_metadata = {
         'name': template.get('name', sops_secret['metadata']['name']),
         'namespace': sops_secret['metadata'].get('namespace')
     }
-    
-    # Copy labels and annotations from template or SopsSecret metadata
-    template_labels = template.get('labels') or sops_secret['metadata'].get('labels')
-    template_annotations = template.get('annotations') or sops_secret['metadata'].get('annotations')
-    
-    if template_labels:
-        secret_metadata['labels'] = template_labels
-    if template_annotations:
-        secret_metadata['annotations'] = template_annotations
+    # Add labels and annotations if present
+    for field in ['labels', 'annotations']:
+        value = template.get(field) or sops_secret['metadata'].get(field)
+        if value:
+            secret_metadata[field] = value
     
     # Build the Secret
     secret = {
@@ -143,27 +131,20 @@ def decrypt_with_sops(content):
         if temp_path and os.path.exists(temp_path):
             os.unlink(temp_path)
 
-def is_sops_encrypted(content):
-    """Check if content appears to be SOPS encrypted"""
-    return isinstance(content, str) and 'sops:' in content
 
 def main():
     try:
         # Read content from stdin
         input_content = sys.stdin.read()
         
-        # Fast path: Skip non-SOPS content quickly
-        if 'sops:' not in input_content and 'SopsSecret' not in input_content:
+        # Fast path: Skip non-SOPS content and multi-document YAML
+        if (('sops:' not in input_content and 'SopsSecret' not in input_content) or
+            input_content.startswith('---\n') or '\n---\n' in input_content):
             sys.stdout.write(input_content)
             return
         
-        # Skip multi-document YAML files
-        if input_content.startswith('---\n') or '\n---\n' in input_content:
-            sys.stdout.write(input_content)
-            return
-        
-        # Check if this looks like encrypted SOPS content (single document)
-        if is_sops_encrypted(input_content):
+        # Check if this looks like encrypted SOPS content
+        if 'sops:' in input_content:
             # Try to decrypt single SOPS document
             decrypted = decrypt_with_sops(input_content)
             if decrypted and isinstance(decrypted, dict):
@@ -183,21 +164,16 @@ def main():
                     yaml.dump(decrypted, sys.stdout, default_flow_style=False)
                     return
         
-        # Try to parse as single document YAML
+        # Try to parse as unencrypted SopsSecret
         try:
             content = yaml.safe_load(input_content)
-            if content and isinstance(content, dict):
-                kind = content.get('kind', '')
-                if kind == 'SopsSecret':
-                    # Check if unencrypted SopsSecret should be processed
-                    if should_process_sops_secret(content):
-                        # Convert SopsSecret back to Secret
-                        secret = sops_secret_to_secret(content)
-                        yaml.dump(secret, sys.stdout, default_flow_style=False)
-                    else:
-                        # SopsSecret doesn't have required annotation, return as-is
-                        sys.stdout.write(input_content)
-                    return
+            if content and isinstance(content, dict) and content.get('kind') == 'SopsSecret':
+                if should_process_sops_secret(content):
+                    secret = sops_secret_to_secret(content)
+                    yaml.dump(secret, sys.stdout, default_flow_style=False)
+                else:
+                    sys.stdout.write(input_content)
+                return
         except yaml.YAMLError:
             pass
         

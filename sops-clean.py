@@ -31,35 +31,19 @@ def secret_to_sops_secret(secret):
     original_name = secret['metadata']['name']
     sops_name = original_name if original_name.endswith('-sops') else f"{original_name}-sops"
     
-    # Preserve metadata (labels, annotations)
+    # Build SopsSecret metadata
     sops_metadata = {
         'name': sops_name,
-        'namespace': secret['metadata'].get('namespace')
+        'namespace': secret['metadata'].get('namespace'),
+        **{k: v for k, v in secret['metadata'].items() if k in ['labels', 'annotations']}
     }
     
-    # Copy labels and annotations from original metadata
-    if 'labels' in secret['metadata']:
-        sops_metadata['labels'] = secret['metadata']['labels']
-    if 'annotations' in secret['metadata']:
-        sops_metadata['annotations'] = secret['metadata']['annotations']
-    
-    # Build secret template - preserve original field types
+    # Build secret template
     secret_template = {
         'name': original_name,
-        'type': secret.get('type', 'Opaque')
+        'type': secret.get('type', 'Opaque'),
+        **{k: v for k, v in secret.items() if k in ['data', 'stringData', 'immutable']}
     }
-    
-    # Handle 'data' field (base64 encoded values) - keep as data
-    if 'data' in secret:
-        secret_template['data'] = secret['data']
-    
-    # Handle 'stringData' field (plain text values) - keep as stringData  
-    if 'stringData' in secret:
-        secret_template['stringData'] = secret['stringData']
-    
-    # Handle immutable field if present
-    if 'immutable' in secret:
-        secret_template['immutable'] = secret['immutable']
     
     
     return {
@@ -124,13 +108,10 @@ def main():
         # Read content from stdin first for fast detection
         input_content = sys.stdin.read()
         
-        # Fast path: Skip non-secrets quickly
-        if 'kind:' not in input_content or ('Secret' not in input_content and 'SopsSecret' not in input_content):
-            sys.stdout.write(input_content)
-            return
-        
-        # Skip multi-document YAML files
-        if input_content.startswith('---\n') or '\n---\n' in input_content:
+        # Fast path: Skip non-secrets and multi-document YAML
+        if ('kind:' not in input_content or 
+            ('Secret' not in input_content and 'SopsSecret' not in input_content) or
+            input_content.startswith('---\n') or '\n---\n' in input_content):
             sys.stdout.write(input_content)
             return
         
@@ -143,22 +124,15 @@ def main():
         
         kind = content.get('kind', '')
         
-        if kind == 'Secret':
-            # Check if secret should be processed
-            if should_process_secret(content):
-                # Convert Secret to SopsSecret and encrypt
-                sops_secret = secret_to_sops_secret(content)
-                encrypted = encrypt_with_sops(sops_secret)
-                sys.stdout.write(encrypted)
-            else:
-                # Secret doesn't have required annotation, pass through unchanged
-                sys.stdout.write(input_content)
+        if kind == 'Secret' and should_process_secret(content):
+            # Convert Secret to SopsSecret and encrypt
+            sops_secret = secret_to_sops_secret(content)
+            sys.stdout.write(encrypt_with_sops(sops_secret))
         elif kind == 'SopsSecret':
             # Already a SopsSecret, just encrypt
-            encrypted = encrypt_with_sops(content)
-            sys.stdout.write(encrypted)
+            sys.stdout.write(encrypt_with_sops(content))
         else:
-            # Not a Secret or SopsSecret, pass through unchanged
+            # Not processable, pass through unchanged
             sys.stdout.write(input_content)
             
     except Exception:
